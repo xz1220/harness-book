@@ -5,7 +5,6 @@ import sys
 
 from anthropic import Anthropic
 
-
 SYSTEM = """You are a tiny ReAct agent.
 At each step, either call the bash tool or finish.
 
@@ -24,16 +23,18 @@ Final: final answer to the user
 Only run bash commands that are necessary for the task.
 """
 
-
 def call_model(messages):
-    message = Anthropic().messages.create(
-        model=os.getenv("ANTHROPIC_MODEL", "claude-sonnet-4-5"),
-        messages=messages,
-        system=SYSTEM,
-        max_tokens=1000,
+    client = Anthropic(
+        api_key=os.environ["KIMI_API_KEY"],
+        base_url=os.getenv("KIMI_BASE_URL", "https://api.kimi.com/coding/"),
     )
-    return "\n".join(block.text for block in message.content if block.type == "text")
-
+    response = client.messages.create(
+        model=os.getenv("KIMI_MODEL", "kimi-for-coding"),
+        max_tokens=1000,
+        system=SYSTEM,
+        messages=messages,
+    )
+    return "".join(b.text for b in response.content if b.type == "text")
 
 def parse_action(text):
     if "Final:" in text:

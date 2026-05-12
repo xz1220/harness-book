@@ -12,14 +12,19 @@
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -r requirements.txt
-export ANTHROPIC_API_KEY=your_api_key
+export KIMI_API_KEY=your_kimi_code_api_key
 python agent.py "用 bash 看看当前目录里有什么"
 ```
 
 可选环境变量：
 
-- `ANTHROPIC_MODEL`：默认 `claude-sonnet-4-5`
+- `KIMI_BASE_URL`：默认 `https://api.kimi.com/coding/`
+- `KIMI_MODEL`：默认 `kimi-for-coding`
 - `MAX_STEPS`：默认 `5`
+
+这个示例走 Kimi For Coding 的 Anthropic 兼容端点，用 `anthropic` SDK 调用。需要在 Kimi Code Console 里创建 API Key（`sk-kimi-...`）。注意 Kimi Code 和 Kimi 开放平台不是同一套 key：开放平台的 key 走 `https://api.moonshot.ai/v1`，跟这里默认的 endpoint 不通。
+
+> 为什么是 Anthropic SDK 而不是 OpenAI SDK：Kimi For Coding 的 `coding/v1` OpenAI 兼容路径会按客户端做白名单，普通 `openai` SDK 会被 403 拦掉；它的 Anthropic 兼容路径 (`coding/`) 则在官方文档列出的"其他 Coding Agent"接入方式里，`anthropic` SDK 自带的 UA 不会被拦。
 
 ## 这个版本故意只做三件事
 
