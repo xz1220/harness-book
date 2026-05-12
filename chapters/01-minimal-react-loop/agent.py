@@ -1,55 +1,39 @@
 import os
-import re
 import subprocess
 import sys
 
 from anthropic import Anthropic
 
 SYSTEM = """You are a tiny ReAct agent.
-At each step, either call the bash tool or finish.
-
-To call the tool:
-Thought: brief reason
-Action: bash
-Command:
-```bash
-shell command here
-```
-
-To finish:
-Thought: brief reason
-Final: final answer to the user
-
+You have one tool: `bash`. Call it to inspect or act on the system.
+When you have enough information to answer the user, stop calling tools and reply with plain text.
 Only run bash commands that are necessary for the task.
 """
+
+BASH_TOOL = {
+    "name": "bash",
+    "description": "Run a shell command. Returns combined stdout+stderr (tail-truncated) and the exit code.",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "command": {"type": "string", "description": "Shell command to run."},
+        },
+        "required": ["command"],
+    },
+}
+
 
 def call_model(messages):
     client = Anthropic(
         api_key=os.environ["KIMI_API_KEY"],
         base_url=os.getenv("KIMI_BASE_URL", "https://api.kimi.com/coding/"),
     )
-    response = client.messages.create(
+    return client.messages.create(
         model=os.getenv("KIMI_MODEL", "kimi-for-coding"),
         max_tokens=1000,
         system=SYSTEM,
+        tools=[BASH_TOOL],
         messages=messages,
-    )
-    return "".join(b.text for b in response.content if b.type == "text")
-
-def parse_action(text):
-    if "Final:" in text:
-        return "final", text.split("Final:", 1)[1].strip()
-    if "Action: bash" not in text:
-        return "error", "model did not choose Action: bash or Final"
-
-    match = re.search(r"Command:\s*```(?:bash|sh)?\s*(.*?)```", text, re.DOTALL)
-    if match:
-        return "bash", match.group(1).strip()
-
-    match = re.search(r"Command:\s*(.*)", text, re.DOTALL)
-    return ("bash", match.group(1).strip()) if match else (
-        "error",
-        "model chose bash but did not provide a command",
     )
 
 
@@ -71,31 +55,43 @@ def run_bash(command):
 
 def main():
     task = " ".join(sys.argv[1:]).strip() or input("Task: ").strip()
-    messages = [{"role": "user", "content": f"Task: {task}"}]
+    messages = [{"role": "user", "content": task}]
     max_steps = int(os.getenv("MAX_STEPS", "5"))
 
     for step in range(1, max_steps + 1):
-        text = call_model(messages)
-        print(f"\n--- assistant step {step} ---\n{text}")
+        resp = call_model(messages)
+        print(f"\n--- assistant step {step} (stop_reason={resp.stop_reason}) ---")
+        for block in resp.content:
+            if block.type == "text" and block.text.strip():
+                print(block.text)
+            elif block.type == "tool_use":
+                print(f"[tool_use {block.name}] {block.input}")
 
-        kind, payload = parse_action(text)
-        if kind == "final":
-            print(f"\nFinal: {payload}")
+        messages.append({"role": "assistant", "content": resp.content})
+
+        if resp.stop_reason != "tool_use":
             return
 
-        observation = payload
-        if kind == "bash":
-            print(f"\n$ {payload}\n")
-            observation = run_bash(payload)
-
-        print(observation)
-        messages.append({"role": "assistant", "content": text})
-        messages.append({
-            "role": "user",
-            "content": f"Observation:\n{observation}\n\nContinue. Use Final when done.",
-        })
+        tool_results = []
+        for block in resp.content:
+            if block.type != "tool_use":
+                continue
+            if block.name == "bash":
+                command = block.input.get("command", "")
+                print(f"\n$ {command}")
+                observation = run_bash(command)
+            else:
+                observation = f"unknown tool: {block.name}"
+            print(observation)
+            tool_results.append({
+                "type": "tool_result",
+                "tool_use_id": block.id,
+                "content": observation,
+            })
+        messages.append({"role": "user", "content": tool_results})
 
     print(f"\nStopped: hit MAX_STEPS={max_steps}")
+
 
 if __name__ == "__main__":
     main()

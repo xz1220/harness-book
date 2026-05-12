@@ -28,8 +28,8 @@ python agent.py "用 bash 看看当前目录里有什么"
 
 ## 这个版本故意只做三件事
 
-- 调模型，让模型输出 `Thought / Action / Command` 或 `Final`
-- 解析 `Action: bash`
-- 执行命令，把 `Observation` 回喂给模型
+- 调模型，带上一个 `bash` 工具 schema（Anthropic tool calling）
+- 模型返回 `tool_use` 时执行命令，把结果作为 `tool_result` 回喂给模型
+- 模型返回非 `tool_use` 的 `stop_reason`（一般是 `end_turn`）时退出循环
 
-这里还没有 permission、sandbox、工具 schema、并行工具调用和上下文压缩。这些会放到后续章节。
+这里还没有 permission、sandbox、并行工具调用和上下文压缩。这些会放到后续章节。

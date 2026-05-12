@@ -19,31 +19,34 @@
 
 ## 最小协议
 
-这一章先不用官方 tool calling。我们让模型按纯文本格式输出：
+我们直接用 Anthropic 的官方 tool calling。给模型注册一个 `bash` 工具：
 
-````text
-Thought: 解释下一步
-Action: bash
-Command:
-```bash
-pwd && ls
-```
-````
-
-如果任务完成，模型输出：
-
-```text
-Thought: 解释为什么完成
-Final: 给用户的最终答案
+```python
+BASH_TOOL = {
+    "name": "bash",
+    "description": "Run a shell command...",
+    "input_schema": {
+        "type": "object",
+        "properties": {
+            "command": {"type": "string", "description": "Shell command to run."},
+        },
+        "required": ["command"],
+    },
+}
 ```
 
-这已经足够构成一个 ReAct loop：
+每轮模型的回复要么是 `tool_use` block（要 harness 帮它执行命令），要么是普通 `text` block（任务完成，输出答案）。harness 只需要做两件事：
+
+1. 如果 `stop_reason == "tool_use"`，遍历返回里的 `tool_use` block，执行命令，把结果以 `tool_result` block 形式作为下一条 `user` message 回喂给模型。
+2. 否则（一般是 `stop_reason == "end_turn"`），直接结束循环——模型已经给出最终答复。
+
+完整循环：
 
 1. 用户给任务
-2. 模型决定下一条命令
-3. harness 执行 bash
-4. harness 把 observation 回喂给模型
-5. 循环直到 `Final`
+2. 模型决定下一条命令（或决定收尾）
+3. harness 执行 bash，包成 `tool_result`
+4. 模型看到 `tool_result` 决定下一步
+5. 循环直到 `stop_reason != "tool_use"`
 
 ## 运行配套代码
 
