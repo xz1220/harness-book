@@ -29,11 +29,6 @@ extra:
 nav:
   - 首页: index.md
   - 第 1 章 最简 ReAct loop: 01-minimal-react-loop.md
-  - 第 2 章 工具系统: 02-tool-system.md
-  - 第 3 章 自举：harness 改自己: 03-self-bootstrap.md
-  - 第 4 章 Permission 与 sandbox: 04-permission-sandbox.md
-  - 第 5 章 上下文与记忆: 05-context-memory.md
-  - 第 6 章 完整 harness: 06-complete-harness.md
 
 plugins:
   - search

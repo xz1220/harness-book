@@ -32,4 +32,4 @@ python agent.py "用 bash 看看当前目录里有什么"
 - 模型返回 `tool_use` 时执行命令，把结果作为 `tool_result` 回喂给模型
 - 模型返回非 `tool_use` 的 `stop_reason`（一般是 `end_turn`）时退出循环
 
-这里还没有 permission、sandbox、并行工具调用和上下文压缩。这些会放到后续章节。
+这里还没有 permission、sandbox、并行工具调用和上下文压缩。这些会在后续写作中逐步加入。
