@@ -31,6 +31,7 @@ GitHub Pages：https://xz1220.github.io/harness-book/
 
 ## 章节大纲
 
+0. 什么是 harness（概念铺垫，无代码）
 1. 最简 ReAct loop
 2. 工具系统设计
 3. MCP 集成
@@ -39,7 +40,7 @@ GitHub Pages：https://xz1220.github.io/harness-book/
 6. 记忆系统设计
 7. 多 Agent 系统（子 Agent、同级 Agent）
 
-> 当前正文和代码先只保留第 1 章，后续章节会按这个路线图逐步加入。
+> 当前正文先保留第 0、1 章，后续章节会按这个路线图逐步加入。
 
 ## 本地预览
 

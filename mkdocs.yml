@@ -28,6 +28,7 @@ extra:
 
 nav:
   - 首页: index.md
+  - 第 0 章 什么是 harness: 00-what-is-a-harness.md
   - 第 1 章 最简 ReAct loop: 01-minimal-react-loop.md
 
 plugins:
